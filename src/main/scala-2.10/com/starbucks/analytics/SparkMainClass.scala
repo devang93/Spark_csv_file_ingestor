@@ -1,14 +1,13 @@
 package com.starbucks.analytics
 
 import java.io.{BufferedReader, File, FileReader}
-import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util
 
+import java.sql.Timestamp
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
-import org.joda.time.DateTime
 
 /**
   * Created by depatel on 12/1/2016.
@@ -54,25 +53,25 @@ object SparkMainClass {
       if(numRawValues == columnDataTypeMap.size()){
         for( i <- 0 to rawValues.length-1 ){
           val dataType = columnDataTypeMap.get(columnNames(i))
-          //val dateTimeFormat = new SimpleDateFormat("mm-dd-yyyy")
-          var convertedValue: Any = null
-              convertedValue = dataType match {
-              case "String" => convertedValue = rawValues(i)
-              case "Integer" => convertedValue = rawValues(i).toInt
-              case "Boolean" => convertedValue = rawValues(i).toBoolean
-              case "Long" => convertedValue = rawValues(i).toLong
-              case "Double" => convertedValue = rawValues(i).toDouble
-              case "Float" => convertedValue = rawValues(i).toFloat
-              case "Timestamp" => convertedValue = rawValues(i).
+          val dateTimeFormat = new SimpleDateFormat("mm-dd-yyyy'T'HH:mm:ssXXX")
+//          var convertedValue: Any = null
+            val convertedValue:Any = dataType match {
+              case "String" => rawValues(i)
+              case "Integer" => rawValues(i).toInt
+              case "Boolean" => rawValues(i).toBoolean
+              case "Long" => rawValues(i).toLong
+              case "Double" => rawValues(i).toDouble
+              case "Float" => rawValues(i).toFloat
+              case "Timestamp" => new Timestamp(dateTimeFormat.parse(rawValues(i)).getTime)
               case _ => { println("ohhhh"+ rawValues(i) + dataType)
-                convertedValue = ""}
+                null }
             }
             convertedValues.add(convertedValue)
+          println("added :" +convertedValue.toString)
         }
       } else {
         println("Invalid input")
       }
-      Timestamp
 
       if(convertedValues.size() == numRawValues)
         Row.fromSeq(convertedValues.toArray)
@@ -81,6 +80,7 @@ object SparkMainClass {
     }).filter( row => row.size>0 )
 
     println(inputDataRDD.count())
+    println(inputDataRDD.collect().foreach(println))
     val testDF = new SQLContext(sc).createDataFrame(inputDataRDD, StructType(schemaInfo._2))
     testDF.show()
   }
